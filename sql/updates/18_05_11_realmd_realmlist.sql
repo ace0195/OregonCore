@@ -1,0 +1,1 @@
+ALTER TABLE `realmlist` CHANGE `realmbuilds` `gamebuild` varchar(64) NOT NULL default '';
