@@ -1257,7 +1257,7 @@ valid examples:
                     if (linkedSpell)
                     {
                         // spells with that flag have a prefix of "$PROFESSION: "
-                        if (linkedSpell->Attributes & SPELL_ATTR_TRADESPELL)
+                        if (linkedSpell->Attributes & SPELL_ATTR0_TRADESPELL)
                         {
                             // lookup skillid
                             SkillLineAbilityMap::const_iterator lower = spellmgr.GetBeginSkillLineAbilityMap(linkedSpell->Id);

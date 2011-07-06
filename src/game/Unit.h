@@ -520,7 +520,7 @@ enum UnitFlags
     UNIT_FLAG_DISABLE_MOVE          = 0x00000004,
     UNIT_FLAG_PVP_ATTACKABLE        = 0x00000008,           // allow apply pvp rules to attackable state in addition to faction dependent state
     UNIT_FLAG_RENAME                = 0x00000010,
-    UNIT_FLAG_PREPARATION           = 0x00000020,           // don't take reagents for spells with SPELL_ATTR_EX5_NO_REAGENT_WHILE_PREP
+    UNIT_FLAG_PREPARATION           = 0x00000020,           // don't take reagents for spells with SPELL_ATTR5_NO_REAGENT_WHILE_PREP
     UNIT_FLAG_UNK_6                 = 0x00000040,
     UNIT_FLAG_NOT_ATTACKABLE_1      = 0x00000080,           // ?? (UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_NOT_ATTACKABLE_1) is NON_PVP_ATTACKABLE
     UNIT_FLAG_OOC_NOT_ATTACKABLE    = 0x00000100,           // 2.0.8 - (OOC Out Of Combat) Can not be attacked when not in combat. Removed if unit for some reason enter combat (flag probably removed for the attacked and it's party/group only)
@@ -1413,11 +1413,30 @@ class Unit : public WorldObject
         uint32 m_detectInvisibilityMask;
         uint32 m_invisibilityMask;
 
-        uint32 m_ShapeShiftFormSpellId;
-        ShapeshiftForm m_form;
-        bool IsInFeralForm() const { return m_form == FORM_CAT || m_form == FORM_BEAR || m_form == FORM_DIREBEAR; }
-        bool IsInTravelForm() const { return m_form == FORM_TRAVEL; }
-        bool IsInFlightForm() const { return m_form == FORM_FLIGHT_EPIC || m_form == FORM_FLIGHT; }
+        ShapeshiftForm GetShapeshiftForm() const { return ShapeshiftForm(GetByteValue(UNIT_FIELD_BYTES_2, 3)); }
+        void SetShapeshiftForm(ShapeshiftForm form)
+        {
+            SetByteValue(UNIT_FIELD_BYTES_2, 3, form);
+
+            // force update as too quick shapeshifting and back
+            // causes the value to stay the same serverside
+            // causes issues clientside (player gets stuck)
+            ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
+        }
+
+        inline bool IsInFeralForm() const
+        {
+            ShapeshiftForm form = GetShapeshiftForm();
+            return form == FORM_CAT || form == FORM_BEAR || form == FORM_DIREBEAR;
+        }
+
+        inline bool IsInDisallowedMountForm() const
+        {
+            ShapeshiftForm form = GetShapeshiftForm();
+            return form != FORM_NONE && form != FORM_BATTLESTANCE && form != FORM_BERSERKERSTANCE && form != FORM_DEFENSIVESTANCE &&
+                form != FORM_SHADOW;
+        }
+
         float m_modMeleeHitChance;
         float m_modRangedHitChance;
         float m_modSpellHitChance;

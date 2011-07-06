@@ -324,7 +324,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
             spellInfo = actualSpellInfo;
     }
 
-    if (spellInfo->AttributesEx2 & SPELL_ATTR_EX2_AUTOREPEAT_FLAG)
+    if (spellInfo->AttributesEx2 & SPELL_ATTR2_AUTOREPEAT_FLAG)
     {
         if (_player->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL) && _player->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL)->m_spellInfo->Id == spellInfo->Id)
             return;
@@ -353,8 +353,8 @@ void WorldSession::HandleCancelAuraOpcode(WorldPacket& recvPacket)
     if (!spellInfo)
         return;
 
-    // not allow remove non positive spells and spells with attr SPELL_ATTR_CANT_CANCEL
-    if (!IsPositiveSpell(spellId) || (spellInfo->Attributes & SPELL_ATTR_CANT_CANCEL))
+    // not allow remove non positive spells and spells with attr SPELL_ATTR0_CANT_CANCEL
+    if (!IsPositiveSpell(spellId) || (spellInfo->Attributes & SPELL_ATTR0_CANT_CANCEL))
         return;
 
     // channeled spell case (it currently casted then)

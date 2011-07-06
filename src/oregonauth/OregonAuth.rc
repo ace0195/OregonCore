@@ -36,7 +36,7 @@
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_APPICON             ICON                    "OregonRealm.ico"
+IDI_APPICON             ICON                    "OregonAuth.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 // Neutre (Par défaut système) resources
@@ -69,12 +69,12 @@ BEGIN
     BEGIN
         BLOCK "080004b0"
         BEGIN
-            VALUE "FileDescription", "OregonRealm"
+            VALUE "FileDescription", "OregonAuth"
             VALUE "FileVersion", STRFILEVER
-            VALUE "InternalName", "OregonRealm"
-            VALUE "LegalCopyright", "Copyright (C) 2009-2010"
-            VALUE "OriginalFilename", "OregonRealm.exe"
-            VALUE "ProductName", "OregonRealm"
+            VALUE "InternalName", "OregonAuth"
+            VALUE "LegalCopyright", "Copyright (C) 2009-2011"
+            VALUE "OriginalFilename", "OregonAuth.exe"
+            VALUE "ProductName", "OregonAuth"
             VALUE "ProductVersion", STRPRODUCTVER
         END
     END

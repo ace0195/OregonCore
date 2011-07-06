@@ -72,7 +72,7 @@ BEGIN
             VALUE "FileDescription", "OregonCore"
             VALUE "FileVersion", STRFILEVER
             VALUE "InternalName", "OregonCore"
-            VALUE "LegalCopyright", "Copyright (C) 2009-2010"
+            VALUE "LegalCopyright", "Copyright (C) 2009-2011"
             VALUE "OriginalFilename", "OregonCore.exe"
             VALUE "ProductName", "OregonCore"
             VALUE "ProductVersion", STRPRODUCTVER

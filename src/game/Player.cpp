@@ -1348,7 +1348,7 @@ void Player::setDeathState(DeathState s)
         clearResurrectRequestData();
 
         // remove form before other mods to prevent incorrect stats calculation
-        RemoveAurasDueToSpell(m_ShapeShiftFormSpellId);
+        RemoveAuraTypeByCaster(SPELL_AURA_MOD_SHAPESHIFT, 0);
 
         //FIXME: is pet dismissed at dying or releasing spirit? if second, add setDeathState(DEAD) to HandleRepopRequestOpcode and define pet unsummon here with (s == DEAD)
         RemovePet(NULL, PET_SAVE_NOT_IN_SLOT, true);
@@ -2926,6 +2926,8 @@ bool Player::addSpell(uint32 spell_id, bool active, bool learning, bool loading,
 
     uint32 talentCost = GetTalentSpellCost(spell_id);
 
+    ShapeshiftForm form = GetShapeshiftForm();
+
     // cast talents with SPELL_EFFECT_LEARN_SPELL (other dependent spells will learned later as not auto-learned)
     // note: all spells with SPELL_EFFECT_LEARN_SPELL isn't passive
     if (talentCost > 0 && IsSpellHaveEffect(spellInfo,SPELL_EFFECT_LEARN_SPELL))
@@ -2941,15 +2943,15 @@ bool Player::addSpell(uint32 spell_id, bool active, bool learning, bool loading,
             spell_id != 5420 && spell_id != 5419 && spell_id != 7376 &&
             spell_id != 7381 && spell_id != 21156 && spell_id != 21009 &&
             spell_id != 21178 && spell_id != 33948 && spell_id != 40121) ||
-            m_form != 0 && (spellInfo->Stances & (1<<(m_form-1))) ||
-            (spell_id == 5420 && m_form == FORM_TREE) ||
-            (spell_id == 5419 && m_form == FORM_TRAVEL) ||
-            (spell_id == 7376 && m_form == FORM_DEFENSIVESTANCE) ||
-            (spell_id == 7381 && m_form == FORM_BERSERKERSTANCE) ||
-            (spell_id == 21156 && m_form == FORM_BATTLESTANCE)||
-            (spell_id == 21178 && (m_form == FORM_BEAR || m_form == FORM_DIREBEAR)) ||
-            (spell_id == 33948 && m_form == FORM_FLIGHT) ||
-            (spell_id == 40121 && m_form == FORM_FLIGHT_EPIC))
+            form != 0 && (spellInfo->Stances & (1<<(form-1))) ||
+            (spell_id == 5420 && form == FORM_TREE) ||
+            (spell_id == 5419 && form == FORM_TRAVEL) ||
+            (spell_id == 7376 && form == FORM_DEFENSIVESTANCE) ||
+            (spell_id == 7381 && form == FORM_BERSERKERSTANCE) ||
+            (spell_id == 21156 && form == FORM_BATTLESTANCE)||
+            (spell_id == 21178 && (form == FORM_BEAR || form == FORM_DIREBEAR)) ||
+            (spell_id == 33948 && form == FORM_FLIGHT) ||
+            (spell_id == 40121 && form == FORM_FLIGHT_EPIC))
                                                             //Check CasterAuraStates
             if (!spellInfo->CasterAuraState || HasAuraState(AuraState(spellInfo->CasterAuraState)))
                 CastSpell(this, spell_id, true);
@@ -5122,7 +5124,7 @@ void Player::UpdateWeaponSkill (WeaponAttackType attType)
     if (IsInFeralForm())
         return;                                             // always maximized SKILL_FERAL_COMBAT in fact
 
-    if (m_form == FORM_TREE)
+    if (GetShapeshiftForm() == FORM_TREE)
         return;                                             // use weapon but not skill up
 
     uint32 weapon_skill_gain = sWorld.getConfig(CONFIG_SKILL_GAIN_WEAPON);
@@ -5677,7 +5679,7 @@ void Player::CheckAreaExploreAndOutdoor()
     uint16 areaFlag = GetBaseMap()->GetAreaFlag(GetPositionX(),GetPositionY(),GetPositionZ(), &isOutdoor);
 
     if (sWorld.getConfig(CONFIG_VMAP_INDOOR_CHECK) && !isOutdoor && !isGameMaster())
-        RemoveAurasWithAttribute(SPELL_ATTR_OUTDOORS_ONLY);
+        RemoveAurasWithAttribute(SPELL_ATTR0_OUTDOORS_ONLY);
 
     if (areaFlag==0xffff)
         return;
@@ -7196,7 +7198,7 @@ void Player::ApplyEquipSpell(SpellEntry const* spellInfo, Item* item, bool apply
     if (apply)
     {
         // Cannot be used in this stance/form
-        if (GetErrorAtShapeshiftedCast(spellInfo, m_form) != 0)
+        if (GetErrorAtShapeshiftedCast(spellInfo, GetShapeshiftForm()) != 0)
             return;
 
         if (form_change)                                     // check aura active state from other form
@@ -7230,7 +7232,7 @@ void Player::ApplyEquipSpell(SpellEntry const* spellInfo, Item* item, bool apply
         if (form_change)                                     // check aura compatibility
         {
             // Cannot be used in this stance/form
-            if (GetErrorAtShapeshiftedCast(spellInfo, m_form) == 0)
+            if (GetErrorAtShapeshiftedCast(spellInfo, GetShapeshiftForm()) == 0)
                 return;                                     // and remove only not compatible at form change
         }
 
@@ -7273,7 +7275,7 @@ void Player::UpdateEquipSpellsAtFormChange()
 void Player::CastItemCombatSpell(Unit *target, WeaponAttackType attType, uint32 procVictim, uint32 procEx, SpellEntry const *spellInfo)
 {
 
-    if (spellInfo && ((spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET) ||
+    if (spellInfo && ((spellInfo->Attributes & SPELL_ATTR0_STOP_ATTACK_TARGET) ||
       (spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MAGIC || spellInfo->DmgClass == SPELL_DAMAGE_CLASS_NONE)))
         return;
 
@@ -17664,7 +17666,7 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, uint32 mount_i
         return false;
     }
 
-    if (m_ShapeShiftFormSpellId && m_form != FORM_BATTLESTANCE && m_form != FORM_BERSERKERSTANCE && m_form != FORM_DEFENSIVESTANCE && m_form != FORM_SHADOW)
+    if (IsInDisallowedMountForm())
     {
         WorldPacket data(SMSG_ACTIVATETAXIREPLY, 4);
         data << uint32(ERR_TAXIPLAYERSHAPESHIFTED);
@@ -17875,7 +17877,7 @@ void Player::ProhibitSpellSchool(SpellSchoolMask idSchoolMask, uint32 unTimeMs)
         }
 
         // Not send cooldown for this spells
-        if (spellInfo->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
+        if (spellInfo->Attributes & SPELL_ATTR0_DISABLED_WHILE_ACTIVE)
             continue;
 
         if (spellInfo->PreventionType != SPELL_PREVENTION_TYPE_SILENCE)
@@ -17893,7 +17895,9 @@ void Player::ProhibitSpellSchool(SpellSchoolMask idSchoolMask, uint32 unTimeMs)
 
 void Player::InitDataForForm(bool reapplyMods)
 {
-    SpellShapeshiftEntry const* ssEntry = sSpellShapeshiftStore.LookupEntry(m_form);
+    ShapeshiftForm form = GetShapeshiftForm();
+
+    SpellShapeshiftEntry const* ssEntry = sSpellShapeshiftStore.LookupEntry(form);
     if (ssEntry && ssEntry->attackSpeed)
     {
         SetAttackTime(BASE_ATTACK,ssEntry->attackSpeed);
@@ -17903,7 +17907,7 @@ void Player::InitDataForForm(bool reapplyMods)
     else
         SetRegularAttackTime();
 
-    switch(m_form)
+    switch(form)
     {
         case FORM_CAT:
         {
@@ -18299,7 +18303,7 @@ void Player::AddSpellCooldown(uint32 spellid, uint32 itemid, time_t end_time)
 
 void Player::SendCooldownEvent(SpellEntry const *spellInfo)
 {
-    if (!(spellInfo->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE))
+    if (!(spellInfo->Attributes & SPELL_ATTR0_DISABLED_WHILE_ACTIVE))
         return;
 
     // Get spell cooldown
@@ -20523,7 +20527,7 @@ void Player::AddGlobalCooldown(SpellEntry const *spellInfo, Spell const *spell)
 
     uint32 cdTime = spellInfo->StartRecoveryTime;
 
-    if (!(spellInfo->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)))
+    if (!(spellInfo->Attributes & (SPELL_ATTR0_ABILITY|SPELL_ATTR0_TRADESPELL)))
         cdTime *= GetFloatValue(UNIT_MOD_CAST_SPEED);
     else if (spell->IsRangedSpell() && !spell->IsAutoRepeat())
         cdTime *= m_modAttackSpeedPct[RANGED_ATTACK];

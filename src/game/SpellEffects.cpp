@@ -2043,7 +2043,7 @@ void Spell::EffectTriggerSpell(uint32 i)
     if (spellInfo->EquippedItemClass >=0 && m_caster->GetTypeId() == TYPEID_PLAYER)
     {
         // main hand weapon required
-        if (spellInfo->AttributesEx3 & SPELL_ATTR_EX3_MAIN_HAND)
+        if (spellInfo->AttributesEx3 & SPELL_ATTR3_MAIN_HAND)
         {
             Item* item = m_caster->ToPlayer()->GetWeaponForAttack(BASE_ATTACK);
 
@@ -2057,7 +2057,7 @@ void Spell::EffectTriggerSpell(uint32 i)
         }
 
         // offhand hand weapon required
-        if (spellInfo->AttributesEx3 & SPELL_ATTR_EX3_REQ_OFFHAND)
+        if (spellInfo->AttributesEx3 & SPELL_ATTR3_REQ_OFFHAND)
         {
             Item* item = m_caster->ToPlayer()->GetWeaponForAttack(OFF_ATTACK);
 
@@ -3451,7 +3451,7 @@ void Spell::EffectDispel(uint32 i)
                 if (!aur->IsPositive())
                     positive = false;
                 else
-                    positive = (aur->GetSpellProto()->AttributesEx & SPELL_ATTR_EX_NEGATIVE) == 0;
+                    positive = (aur->GetSpellProto()->AttributesEx & SPELL_ATTR1_NEGATIVE) == 0;
 
                 // do not remove positive auras if friendly target
                 //               negative auras if non-friendly target
@@ -6257,7 +6257,7 @@ void Spell::EffectStealBeneficialBuff(uint32 i)
         if (aur && (1<<aur->GetSpellProto()->Dispel) & dispelMask)
         {
             // Need check for passive? this
-            if (aur->IsPositive() && !aur->IsPassive() && !(aur->GetSpellProto()->AttributesEx4 & SPELL_ATTR_EX4_NOT_STEALABLE))
+            if (aur->IsPositive() && !aur->IsPassive() && !(aur->GetSpellProto()->AttributesEx4 & SPELL_ATTR4_NOT_STEALABLE))
                 steal_list.push_back(aur);
         }
     }

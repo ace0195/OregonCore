@@ -59,7 +59,7 @@ bool Player::UpdateStats(Stats stat)
         case STAT_AGILITY:
             UpdateArmor();
             UpdateAttackPowerAndDamage(true);
-            if (getClass() == CLASS_ROGUE || getClass() == CLASS_HUNTER || getClass() == CLASS_DRUID && m_form == FORM_CAT)
+            if (getClass() == CLASS_ROGUE || getClass() == CLASS_HUNTER || getClass() == CLASS_DRUID && GetShapeshiftForm() == FORM_CAT)
                 UpdateAttackPowerAndDamage();
 
             UpdateAllCritPercentages();
@@ -235,13 +235,13 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
         index_mod = UNIT_FIELD_RANGED_ATTACK_POWER_MODS;
         index_mult = UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER;
 
-        switch(getClass())
+        switch (getClass())
         {
             case CLASS_HUNTER: val2 = level * 2.0f + GetStat(STAT_AGILITY) - 10.0f;    break;
             case CLASS_ROGUE:  val2 = level        + GetStat(STAT_AGILITY) - 10.0f;    break;
             case CLASS_WARRIOR:val2 = level        + GetStat(STAT_AGILITY) - 10.0f;    break;
             case CLASS_DRUID:
-                switch(m_form)
+                switch (GetShapeshiftForm())
                 {
                     case FORM_CAT:
                     case FORM_BEAR:
@@ -256,18 +256,19 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
     }
     else
     {
-        switch(getClass())
+        switch (getClass())
         {
-            case CLASS_WARRIOR: val2 = level*3.0f + GetStat(STAT_STRENGTH)*2.0f                    - 20.0f; break;
-            case CLASS_PALADIN: val2 = level*3.0f + GetStat(STAT_STRENGTH)*2.0f                    - 20.0f; break;
-            case CLASS_ROGUE:   val2 = level*2.0f + GetStat(STAT_STRENGTH) + GetStat(STAT_AGILITY) - 20.0f; break;
-            case CLASS_HUNTER:  val2 = level*2.0f + GetStat(STAT_STRENGTH) + GetStat(STAT_AGILITY) - 20.0f; break;
-            case CLASS_SHAMAN:  val2 = level*2.0f + GetStat(STAT_STRENGTH)*2.0f                    - 20.0f; break;
+            case CLASS_WARRIOR: val2 = level * 3.0f + GetStat(STAT_STRENGTH) * 2.0f                  - 20.0f; break;
+            case CLASS_PALADIN: val2 = level * 3.0f + GetStat(STAT_STRENGTH) * 2.0f                  - 20.0f; break;
+            case CLASS_ROGUE:   val2 = level * 2.0f + GetStat(STAT_STRENGTH) + GetStat(STAT_AGILITY) - 20.0f; break;
+            case CLASS_HUNTER:  val2 = level * 2.0f + GetStat(STAT_STRENGTH) + GetStat(STAT_AGILITY) - 20.0f; break;
+            case CLASS_SHAMAN:  val2 = level * 2.0f + GetStat(STAT_STRENGTH) * 2.0f                  - 20.0f; break;
             case CLASS_DRUID:
             {
-                //Check if Predatory Strikes is skilled
+                ShapeshiftForm form = GetShapeshiftForm();
+                // Check if Predatory Strikes is skilled
                 float mLevelMult = 0.0;
-                switch(m_form)
+                switch(form)
                 {
                     case FORM_CAT:
                     case FORM_BEAR:
@@ -289,17 +290,17 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
                     default: break;
                 }
 
-                switch(m_form)
+                switch(form)
                 {
                     case FORM_CAT:
-                        val2 = getLevel()*(mLevelMult+2.0f) + GetStat(STAT_STRENGTH)*2.0f + GetStat(STAT_AGILITY) - 20.0f; break;
+                        val2 = getLevel()*(mLevelMult+2.0f) + GetStat(STAT_STRENGTH) * 2.0f + GetStat(STAT_AGILITY) - 20.0f; break;
                     case FORM_BEAR:
                     case FORM_DIREBEAR:
-                        val2 = getLevel()*(mLevelMult+3.0f) + GetStat(STAT_STRENGTH)*2.0f - 20.0f; break;
+                        val2 = getLevel() * (mLevelMult + 3.0f) + GetStat(STAT_STRENGTH) * 2.0f - 20.0f; break;
                     case FORM_MOONKIN:
-                        val2 = getLevel()*(mLevelMult+1.5f) + GetStat(STAT_STRENGTH)*2.0f - 20.0f; break;
+                        val2 = getLevel() * (mLevelMult + 1.5f) + GetStat(STAT_STRENGTH) * 2.0f - 20.0f; break;
                     default:
-                        val2 = GetStat(STAT_STRENGTH)*2.0f - 20.0f; break;
+                        val2 = GetStat(STAT_STRENGTH) * 2.0f - 20.0f; break;
                 }
                 break;
             }

@@ -248,7 +248,6 @@ Unit::Unit()
     m_canDualWield = false;
 
     m_state = 0;
-    m_form = FORM_NONE;
     m_deathState = ALIVE;
 
     for (uint8 i = 0; i < CURRENT_MAX_SPELL; ++i)
@@ -268,7 +267,6 @@ Unit::Unit()
     m_detectInvisibilityMask = 0;
     m_invisibilityMask = 0;
     m_transform = 0;
-    m_ShapeShiftFormSpellId = 0;
     m_canModifyStats = false;
 
     for (uint8 i = 0; i < MAX_SPELL_IMMUNITY; ++i)
@@ -2446,7 +2444,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell, 
         attType = RANGED_ATTACK;
 
     // bonus from skills is 0.04% per skill Diff
-    int32 attackerWeaponSkill = !(spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED && !(spell->Attributes & SPELL_ATTR_RANGED) )
+    int32 attackerWeaponSkill = !(spell->DmgClass == SPELL_DAMAGE_CLASS_RANGED && !(spell->Attributes & SPELL_ATTR0_REQ_AMMO) )
         ? int32(GetWeaponSkillValue(attType,pVictim))
         : int32(GetMaxSkillValueForLevel());
 
@@ -2458,9 +2456,9 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell, 
 
     bool canDodge = true;
     bool canParry = true;
-    bool canBlock = spell->AttributesEx3 & SPELL_ATTR_EX3_UNK3;
-    //We use SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY until right Attribute was found
-    bool canMiss = !(spell->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY) && cMiss;
+    bool canBlock = spell->AttributesEx3 & SPELL_ATTR3_BLOCKABLE_SPELL;
+    //We use SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY until right Attribute was found
+    bool canMiss = !(spell->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY) && cMiss;
 
     if (canMiss)
     {
@@ -2472,7 +2470,7 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell, 
     }
 
     // Same spells cannot be parry/dodge
-    if (spell->Attributes & SPELL_ATTR_IMPOSSIBLE_DODGE_PARRY_BLOCK)
+    if (spell->Attributes & SPELL_ATTR0_IMPOSSIBLE_DODGE_PARRY_BLOCK)
         return SPELL_MISS_NONE;
 
     // Chance resist mechanic
@@ -2640,7 +2638,7 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
 
     // Check for immune (use charges)
     // Check if Spell cannot be immuned
-    if (!(spell->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY))
+    if (!(spell->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY))
         if (pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell),true))
             return SPELL_MISS_IMMUNE;
 
@@ -3554,7 +3552,7 @@ bool Unit::AddAura(Aura *Aur)
             m_interruptableAuras.push_back(Aur);
             AddInterruptMask(Aur->GetSpellProto()->AuraInterruptFlags);
         }
-        if ((Aur->GetSpellProto()->Attributes & SPELL_ATTR_BREAKABLE_BY_DAMAGE)
+        if ((Aur->GetSpellProto()->Attributes & SPELL_ATTR0_BREAKABLE_BY_DAMAGE)
             && (Aur->GetModifier()->m_auraname != SPELL_AURA_MOD_POSSESS)) //only dummy aura is breakable
         {
             m_ccAuras.push_back(Aur);
@@ -4024,7 +4022,7 @@ void Unit::RemoveAura(AuraMap::iterator &i, AuraRemoveMode mode)
             UpdateInterruptMask();
         }
 
-        if ((Aur->GetSpellProto()->Attributes & SPELL_ATTR_BREAKABLE_BY_DAMAGE)
+        if ((Aur->GetSpellProto()->Attributes & SPELL_ATTR0_BREAKABLE_BY_DAMAGE)
             && (Aur->GetModifier()->m_auraname != SPELL_AURA_MOD_POSSESS)) //only dummy aura is breakable
         {
             m_ccAuras.remove(Aur);
@@ -4148,8 +4146,8 @@ void Unit::RemoveArenaAuras(bool onleave)
         if (!(iter->second->GetSpellProto()->AttributesEx4 & (1<<21)) &&
                                                             // don't remove stances, shadowform, pally/hunter auras
             !iter->second->IsPassive() &&                   // don't remove passive auras
-            (!(iter->second->GetSpellProto()->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY) ||
-            !(iter->second->GetSpellProto()->Attributes & SPELL_ATTR_UNK8)) &&
+            (!(iter->second->GetSpellProto()->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY) ||
+            !(iter->second->GetSpellProto()->Attributes & SPELL_ATTR0_HIDE_IN_COMBAT_LOG)) &&
                                                             // not unaffected by invulnerability auras or not having that unknown flag (that seemed the most probable)
             (iter->second->IsPositive() ^ onleave))         // remove positive buffs on enter, negative buffs on leave
             RemoveAura(iter);
@@ -4304,7 +4302,7 @@ void Unit::RemoveGameObject(GameObject* gameObj, bool del)
         {
             SpellEntry const* createBySpell = sSpellStore.LookupEntry(spellid);
             // Need activate spell use for owner
-            if (createBySpell && createBySpell->Attributes & SPELL_ATTR_DISABLED_WHILE_ACTIVE)
+            if (createBySpell && createBySpell->Attributes & SPELL_ATTR0_DISABLED_WHILE_ACTIVE)
                 // note: item based cooldowns and cooldown spell mods with charges ignored (unknown existed cases)
                 ToPlayer()->SendCooldownEvent(createBySpell);
         }
@@ -5924,7 +5922,7 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
                 // Druid Forms Trinket
                 if (auraSpellInfo->Id == 37336)
                 {
-                    switch(m_form)
+                    switch (GetShapeshiftForm())
                     {
                         case 0:             trigger_spell_id = 37344;break;
                         case FORM_CAT:      trigger_spell_id = 37341;break;
@@ -7740,7 +7738,7 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
         return false;
 
     // not critting spell
-    if ((spellProto->AttributesEx2 & SPELL_ATTR_EX2_CANT_CRIT))
+    if ((spellProto->AttributesEx2 & SPELL_ATTR2_CANT_CRIT))
         return false;
 
     float crit_chance = 0.0f;
@@ -8116,7 +8114,7 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo, bool useCharges)
         return false;
 
     // If Spell has this flag cannot be resisted/immuned/etc
-    if (spellInfo->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY)
+    if (spellInfo->Attributes & SPELL_ATTR0_UNAFFECTED_BY_INVULNERABILITY)
         return false;
 
     SpellImmuneList const& dispelList = m_spellImmune[IMMUNITY_DISPEL];
@@ -8124,8 +8122,8 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo, bool useCharges)
         if (itr->type == spellInfo->Dispel)
             return true;
 
-    if (!(spellInfo->AttributesEx & SPELL_ATTR_EX_UNAFFECTED_BY_SCHOOL_IMMUNE) &&         // unaffected by school immunity
-        !(spellInfo->AttributesEx & SPELL_ATTR_EX_DISPEL_AURAS_ON_IMMUNITY)               // can remove immune (by dispell or immune it)
+    if (!(spellInfo->AttributesEx & SPELL_ATTR1_UNAFFECTED_BY_SCHOOL_IMMUNE) &&         // unaffected by school immunity
+        !(spellInfo->AttributesEx & SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY)               // can remove immune (by dispell or immune it)
         && (spellInfo->Id != 42292))
     {
         SpellImmuneList const& schoolList = m_spellImmune[IMMUNITY_SCHOOL];
@@ -8397,7 +8395,7 @@ void Unit::ApplySpellDispelImmunity(const SpellEntry * spellProto, DispelType ty
 {
     ApplySpellImmune(spellProto->Id,IMMUNITY_DISPEL, type, apply);
 
-    if (apply && spellProto->AttributesEx & SPELL_ATTR_EX_DISPEL_AURAS_ON_IMMUNITY)
+    if (apply && spellProto->AttributesEx & SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY)
         RemoveAurasWithDispelType(type);
 }
 
@@ -8560,7 +8558,7 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
     {
         if (m_currentSpells[CURRENT_GENERIC_SPELL] && m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED)
         {
-            if (m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->Attributes & SPELL_ATTR_CANT_USED_IN_COMBAT)
+            if (m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->Attributes & SPELL_ATTR0_CANT_USED_IN_COMBAT)
                 InterruptSpell(CURRENT_GENERIC_SPELL);
         }
     }
@@ -8721,7 +8719,7 @@ void Unit::ModSpellCastTime(SpellEntry const* spellProto, int32 & castTime, Spel
     if (Player* modOwner = GetSpellModOwner())
         modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_CASTING_TIME, castTime, spell);
 
-    if (spellProto->Attributes & SPELL_ATTR_RANGED && !(spellProto->AttributesEx2 & SPELL_ATTR_EX2_AUTOREPEAT_FLAG))
+    if (spellProto->Attributes & SPELL_ATTR0_REQ_AMMO && !(spellProto->AttributesEx2 & SPELL_ATTR2_AUTOREPEAT_FLAG))
         castTime = int32 (float(castTime) * m_modAttackSpeedPct[RANGED_ATTACK]);
     else // TODO: fix it
         if (spellProto->SpellFamilyName) // some magic spells doesn't have dmgType == SPELL_DAMAGE_CLASS_MAGIC (arcane missiles/evocation)
@@ -9344,7 +9342,7 @@ int32 Unit::CalculateSpellDamage(SpellEntry const* spellProto, uint8 effect_inde
         }
     }
 
-    if (!basePointsPerLevel && (spellProto->Attributes & SPELL_ATTR_LEVEL_DAMAGE_CALCULATION && spellProto->spellLevel) &&
+    if (!basePointsPerLevel && (spellProto->Attributes & SPELL_ATTR0_LEVEL_DAMAGE_CALCULATION && spellProto->spellLevel) &&
             spellProto->Effect[effect_index] != SPELL_EFFECT_WEAPON_PERCENT_DAMAGE &&
             spellProto->Effect[effect_index] != SPELL_EFFECT_KNOCK_BACK &&
             spellProto->EffectApplyAuraName[effect_index] != SPELL_AURA_MOD_SPEED_ALWAYS &&
@@ -9535,8 +9533,9 @@ bool Unit::isVisibleForInState(Player const* u, bool inVisibleList) const
 uint32 Unit::GetCreatureType() const
 {
     if (GetTypeId() == TYPEID_PLAYER)
-    {
-        SpellShapeshiftEntry const* ssEntry = sSpellShapeshiftStore.LookupEntry(ToPlayer()->m_form);
+    {		
+        ShapeshiftForm form = GetShapeshiftForm();
+        SpellShapeshiftEntry const* ssEntry = sSpellShapeshiftStore.LookupEntry(form);
         if (ssEntry && ssEntry->creatureType > 0)
             return ssEntry->creatureType;
         else

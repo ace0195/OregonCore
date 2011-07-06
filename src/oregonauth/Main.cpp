@@ -42,13 +42,13 @@
 #endif
 
 #ifndef _OREGON_REALM_CONFIG
-# define _OREGON_REALM_CONFIG  "oregonrealm.conf"
+# define _OREGON_REALM_CONFIG  "oregonauth.conf"
 #endif
 
 #ifdef _WIN32
 #include "ServiceWin32.h"
-char serviceName[] = "realmd";
-char serviceLongName[] = "Oregon realm service";
+char serviceName[] = "auth";
+char serviceLongName[] = "Oregon auth service";
 char serviceDescription[] = "Massive Network Game Object Server";
 /*
  * -1 - not in service mode

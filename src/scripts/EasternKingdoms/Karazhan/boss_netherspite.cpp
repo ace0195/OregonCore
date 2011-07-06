@@ -72,7 +72,7 @@ struct boss_netherspiteAI : public ScriptedAI
         for (int i=0; i<3; ++i)
         {
             if (SpellEntry *spell = GET_SPELL(PlayerBuff[i]))
-                spell->AttributesEx |= SPELL_ATTR_EX_NEGATIVE;
+                spell->AttributesEx |= SPELL_ATTR1_NEGATIVE;
         }
     }
 
