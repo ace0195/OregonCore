@@ -1,0 +1,1 @@
+ALTER TABLE `realmlist` CHANGE `realmflags` `color` tinyint(3) unsigned NOT NULL default '2' COMMENT 'Supported masks: 0x1 (invalid, not show in realm list), 0x2 (offline, set by mangosd), 0x4 (show version and build), 0x20 (new players), 0x40 (recommended)';

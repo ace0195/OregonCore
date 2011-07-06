@@ -1,0 +1,1 @@
+ALTER TABLE `account` CHANGE `active_realm_id` `online` int(11) unsigned NOT NULL default '0';

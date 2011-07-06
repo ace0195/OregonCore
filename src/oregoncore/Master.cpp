@@ -223,7 +223,7 @@ int Master::Run()
     // set gamebuild depend on OregonCore expected builds, and set server online
     std::string builds = AcceptableClientBuildsListStr();
     LoginDatabase.escape_string(builds);
-    LoginDatabase.PExecute("UPDATE realmlist SET realmflags = realmflags & ~(%u), population = 0, gamebuild = '%s'  WHERE id = '%d'", REALM_FLAG_OFFLINE, builds.c_str(), realmID);
+    LoginDatabase.PExecute("UPDATE realmlist SET color = color & ~(%u), population = 0, gamebuild = '%s'  WHERE id = '%d'", REALM_FLAG_OFFLINE, builds.c_str(), realmID);
 
     ACE_Based::Thread* cliThread = NULL;
 
@@ -337,7 +337,7 @@ int Master::Run()
     }
 
     // Set server offline in realmlist
-    LoginDatabase.PExecute("UPDATE realmlist SET realmflags = realmflags | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, realmID);
+    LoginDatabase.PExecute("UPDATE realmlist SET color = color | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, realmID);
 
     // Remove signal handling before leaving
     _UnhookSignals();
@@ -496,7 +496,7 @@ void Master::clearOnlineAccounts()
 {
     // Cleanup online status for characters hosted at current realm
     // todo - Only accounts with characters logged on *this* realm should have online status reset. Move the online column from 'account' to 'realmcharacters'?
-    LoginDatabase.PExecute("UPDATE account SET active_realm_id = 0 WHERE active_realm_id = '%d'", realmID);
+    LoginDatabase.PExecute("UPDATE account SET online = 0 WHERE online = '%d'", realmID);
 
     CharacterDatabase.Execute("UPDATE characters SET online = 0 WHERE online<>0");
 }
