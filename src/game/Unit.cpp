@@ -4580,6 +4580,14 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura* triggeredByAu
                         return false;
 
                     target = SelectNearbyTarget();
+
+                    if (procSpell && procSpell->SpellFamilyFlags == 536870912 && procSpell->SpellIconID == 1648)        // Prevent Execute proc on targets with > 20% health
+                        if (target && target->GetHealth() > target->GetMaxHealth()*0.2)
+                                return false;
+
+                    if (procSpell && procSpell->SpellIconID == 83)      // Prevent Whirlwind proc 4 times. It should proc 1 time.
+                        cooldown = 1;
+
                     if (!target)
                         return false;
 
@@ -6229,6 +6237,9 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, Aura* triggeredB
             if (!pVictim || pVictim == this)
                 return false;
 
+            if (procSpell->Id == 26679)
+                return false;
+
             // Need add combopoint AFTER finish movie (or they dropped in finish phase)
             break;
         }
@@ -7542,7 +7553,7 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
             // Seal of Vengeance - 17% per Fully Stacked Tick - 5 Applications
             else if ((spellProto->SpellFamilyFlags & 0x80000000000LL) && spellProto->SpellIconID == 2292)
             {
-                DotFactor = 0.85f;
+                DotFactor = 0.17f;
                 CastingTime = 3500;
             }
             // Holy shield - 5% of Holy Damage
@@ -8547,7 +8558,7 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
         return;
 
     if (PvP)
-        m_CombatTimer = 5000;
+        m_CombatTimer = 6000;
 
     if (isInCombat())
         return;
@@ -8663,7 +8674,7 @@ bool Unit::canAttack(Unit const* target, bool force) const
     return true;
 }
 
-bool Unit::isAttackableByAOE() const
+bool Unit::isAttackableByAOE(float x, float y, float z, bool LosCheck) const
 {
     if (!isAlive())
         return false;
@@ -8674,6 +8685,10 @@ bool Unit::isAttackableByAOE() const
 
     if (GetTypeId() == TYPEID_PLAYER && ToPlayer()->isGameMaster())
         return false;
+
+    if (LosCheck)
+        if (!IsWithinLOS(x, y, z))
+            return false;
 
     return !isInFlight();
 }
@@ -10319,7 +10334,7 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit * pTarget, uint32 procFlag,
                     sLog.outDebug("ProcDamageAndSpell: casting mending (triggered by %s dummy aura of spell %u)",
                         (isVictim?"a victim's":"an attacker's"),triggeredByAura->GetId());
 
-                    casted = HandleMeandingAuraProc(triggeredByAura);
+                    casted = HandleMendingAuraProc(triggeredByAura);
                     break;
                 }
                 case SPELL_AURA_MOD_HASTE:
@@ -10669,7 +10684,7 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit * pTarget, uint32 procFlag,
                 DEBUG_LOG("ProcDamageAndSpell: casting mending (triggered by %s dummy aura of spell %u)",
                     (isVictim?"a victim's":"an attacker's"),triggeredByAura->GetId());
 
-                HandleMeandingAuraProc(triggeredByAura);
+                HandleMendingAuraProc(triggeredByAura);
                 break;
             }
             case SPELL_AURA_PROC_TRIGGER_SPELL_WITH_VALUE:
@@ -11384,7 +11399,7 @@ bool Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, Aura* aura, SpellEntry con
     return roll_chance_f(chance);
 }
 
-bool Unit::HandleMeandingAuraProc(Aura* triggeredByAura)
+bool Unit::HandleMendingAuraProc(Aura* triggeredByAura)
 {
     // aura can be deleted at casts
     SpellEntry const *spellProto = triggeredByAura->GetSpellProto();
@@ -11427,9 +11442,8 @@ bool Unit::HandleMeandingAuraProc(Aura* triggeredByAura)
                 caster->AddSpellMod(mod, true);
                 CastCustomSpell(target,spellProto->Id,&heal,NULL,NULL,true,NULL,triggeredByAura,caster->GetGUID());
                 caster->AddSpellMod(mod, false);
-
-                heal = caster->SpellHealingBonus(spellProto, heal, HEAL, this);
             }
+            heal = caster->SpellHealingBonus(spellProto, heal, HEAL, this);
         }
     }
 

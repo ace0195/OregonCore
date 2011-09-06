@@ -282,7 +282,11 @@ void BattleGround::Update(time_t diff)
             itr->second.LastOnlineTime += diff;
 
             if (plr)
+            {
                 itr->second.LastOnlineTime = 0;                 // update last online time
+                if (!plr->IsPvP())                              // force all players PvP on
+                    plr->UpdatePvP(true, true);
+            }
             else
                 if (itr->second.LastOnlineTime >= MAX_OFFLINE_TIME)
                     m_RemovedPlayers[itr->first] = 1;           // add to remove list (BG)
@@ -1144,6 +1148,8 @@ void BattleGround::AddPlayer(Player *plr)
     SendPacketToTeam(team, &data, plr, false);
 
     plr->RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+    plr->CombatStop();
+    plr->getHostileRefManager().deleteReferences();
 
     // add arena specific auras
     if (isArena())
