@@ -514,6 +514,25 @@ enum QuestSlotStateMask
     QUEST_STATE_FAIL     = 0x0002
 };
 
+enum SkillUpdateState
+{
+    SKILL_UNCHANGED     = 0,
+    SKILL_CHANGED       = 1,
+    SKILL_NEW           = 2,
+    SKILL_DELETED       = 3
+};
+
+struct SkillStatusData
+{
+    SkillStatusData(uint8 _pos, SkillUpdateState _uState) : pos(_pos), uState(_uState)
+    {
+    }
+    uint8 pos;
+    SkillUpdateState uState;
+};
+
+typedef UNORDERED_MAP<uint32, SkillStatusData> SkillStatusMap;
+
 class Quest;
 class Spell;
 class Item;
@@ -707,6 +726,7 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOADGUILD                = 17,
     PLAYER_LOGIN_QUERY_LOADARENAINFO            = 18,
     PLAYER_LOGIN_QUERY_LOADBGDATA               = 19,
+    PLAYER_LOGIN_QUERY_LOADSKILLS               = 20,
 
     MAX_PLAYER_LOGIN_QUERY
 };
@@ -1375,6 +1395,7 @@ class Player : public Unit, public GridObject<Player>
         void learnDefaultSpells(bool loading = false);
         void learnQuestRewardedSpells();
         void learnQuestRewardedSpells(Quest const* quest);
+        void learnSpellHighRank(uint32 spellid);
 
         uint32 GetFreeTalentPoints() const { return GetUInt32Value(PLAYER_CHARACTER_POINTS1); }
         void SetFreeTalentPoints(uint32 points) { SetUInt32Value(PLAYER_CHARACTER_POINTS1,points); }
@@ -2136,6 +2157,7 @@ class Player : public Unit, public GridObject<Player>
         void _LoadDailyQuestStatus(QueryResult_AutoPtr result);
         void _LoadGroup(QueryResult_AutoPtr result);
         void _LoadReputation(QueryResult_AutoPtr result);
+        void _LoadSkills(QueryResult_AutoPtr result);
         void _LoadSpells(QueryResult_AutoPtr result);
         void _LoadTutorials(QueryResult_AutoPtr result);
         void _LoadFriendList(QueryResult_AutoPtr result);
@@ -2155,6 +2177,7 @@ class Player : public Unit, public GridObject<Player>
         void _SaveQuestStatus();
         void _SaveDailyQuestStatus();
         void _SaveReputation();
+        void _SaveSkills();
         void _SaveSpells();
         void _SaveTutorials();
         void _SaveBGData();
@@ -2201,6 +2224,8 @@ class Player : public Unit, public GridObject<Player>
         int8 m_comboPoints;
 
         QuestStatusMap mQuestStatus;
+
+        SkillStatusMap mSkillStatus;
 
         uint32 m_GuildIdInvited;
         uint32 m_ArenaTeamIdInvited;
@@ -2410,4 +2435,3 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
     return T(diff);
 }
 #endif
-

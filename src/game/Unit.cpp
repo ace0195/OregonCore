@@ -61,9 +61,9 @@ float baseMoveSpeed[MAX_MOVE_TYPE] =
 {
     2.5f,                  // MOVE_WALK
     7.0f,                  // MOVE_RUN
-    1.25f,                 // MOVE_RUN_BACK
+    4.5f,                  // MOVE_RUN_BACK
     4.722222f,             // MOVE_SWIM
-    4.5f,                  // MOVE_SWIM_BACK
+    2.5f,                  // MOVE_SWIM_BACK
     3.141594f,             // MOVE_TURN_RATE
     7.0f,                  // MOVE_FLIGHT
     4.5f,                  // MOVE_FLIGHT_BACK
@@ -9548,7 +9548,7 @@ bool Unit::isVisibleForInState(Player const* u, bool inVisibleList) const
 uint32 Unit::GetCreatureType() const
 {
     if (GetTypeId() == TYPEID_PLAYER)
-    {		
+    {
         ShapeshiftForm form = GetShapeshiftForm();
         SpellShapeshiftEntry const* ssEntry = sSpellShapeshiftStore.LookupEntry(form);
         if (ssEntry && ssEntry->creatureType > 0)
@@ -12265,4 +12265,3 @@ bool CharmInfo::IsReturning()
 {
     return m_isReturning;
 }
-
